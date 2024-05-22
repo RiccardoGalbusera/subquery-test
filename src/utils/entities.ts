@@ -1,10 +1,9 @@
 import { BigNumber } from "ethers";
 import { Interaction, Param } from "../types";
-import { ClaimedEvent } from "../types/contracts/X3f16f8964f8f5ab58929b58619056461f37f7317";
 import { getUserOrCreate } from "./getters";
 
 export async function trackEvent(
-  event: ClaimedEvent,
+  event: any,
   eventId: string,
   tasks: string[],
   paramNames: string[]
