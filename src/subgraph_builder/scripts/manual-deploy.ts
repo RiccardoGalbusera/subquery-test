@@ -2,8 +2,8 @@ import { buildAndDeploySubgraph } from "./index";
 
 // @dev Change this with whatever you need to deploy
 const data = {
-  cid: "cb85cdc9-f080-4adb-8899-84cb4f4323b8",
-  chainId: 11235,
+  cid: "20d56549-59f9-4685-a255-34a67c672c22",
+  chainId: 5234,
   subgraphNumber: 1,
   environment: "local" as const,
   performanceContractId: "",

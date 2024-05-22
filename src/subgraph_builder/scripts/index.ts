@@ -2,20 +2,16 @@ import util from "util";
 import AWS from "aws-sdk";
 import { exec } from "child_process";
 
-import {
-  checkEnv,
-  checkSubgraphDeploymentStatus,
-  getDeployCommand,
-} from "../utils/helpers";
+import { getSubgraphName } from "../utils/helpers";
 import {
   TideEvent,
   getCampaignOnChainEvents,
   getPerformanceContract,
 } from "../utils/axios";
 import {
-  buildYamlFile,
   buildMappingsFile,
   writeAbisForContracts,
+  buildProjectFile,
 } from "./builders";
 
 AWS.config.update({ region: "eu-west-1" });
@@ -68,34 +64,19 @@ export async function buildAndDeploySubgraph(args: {
 
   await buildMappingsFile(eventsByContract);
 
-  await buildYamlFile(eventsByContract, chains[chainId].slug);
+  const subgraphName = getSubgraphName(chainId, environment, subgraphNumber);
+  await buildProjectFile(eventsByContract, subgraphName, chainId);
 
-  let res;
   try {
-    const deployCommand = await getDeployCommand(
-      chainId,
-      environment,
-      subgraphNumber,
-      performanceContractId
-    );
-    res = await execPromisified(deployCommand);
+    await execPromisified("yarn codegen && yarn build && subql publish");
+    return true;
   } catch (e) {
     console.warn(e);
+    return false;
   }
-
-  const success = checkSubgraphDeploymentStatus(res);
-
-  if (!success) {
-    console.log("--------------- Subgraph failed to deploy -----------------");
-    console.log(res?.stderr);
-  }
-
-  return success;
 }
 
 async function main() {
-  checkEnv();
-
   const boundedQueue = new AWS.SQS();
 
   const environment = process.argv[2];
@@ -133,30 +114,33 @@ async function main() {
         environment,
         performanceContractId,
       } = JSON.parse(message.Body);
-      console.log(`Processing message: ${message.Body}`);
-      const success = await buildAndDeploySubgraph({
-        cid,
-        chainId,
-        subgraphNumber,
-        environment,
-        performanceContractId,
-      });
-      console.log(`Deleting message: ${message.Body}`);
-      const deleteParams = {
-        QueueUrl,
-        ReceiptHandle: message.ReceiptHandle || "",
-      };
 
-      try {
-        await boundedQueue.deleteMessage(deleteParams).promise();
-      } catch (err) {
-        console.warn(`Error deleting message from queue: ${err}`);
+      if (chainId === 5234) {
+        console.log(`Processing message: ${message.Body}`);
+        const success = await buildAndDeploySubgraph({
+          cid,
+          chainId,
+          subgraphNumber,
+          environment,
+          performanceContractId,
+        });
+        console.log(`Deleting message: ${message.Body}`);
+        const deleteParams = {
+          QueueUrl,
+          ReceiptHandle: message.ReceiptHandle || "",
+        };
+
+        try {
+          await boundedQueue.deleteMessage(deleteParams).promise();
+        } catch (err) {
+          console.warn(`Error deleting message from queue: ${err}`);
+        }
+
+        // @dev we don't handle subgraph deploy errors yet.
+        // Ideally we should propagate this error to Tide backend and do something.
+        // Usually if the deploy fails there's no point in retrying after 10s.
+        if (!success) console.log(`Subgraph deploy failed.`);
       }
-
-      // @dev we don't handle subgraph deploy errors yet.
-      // Ideally we should propagate this error to Tide backend and do something.
-      // Usually if the deploy fails there's no point in retrying after 10s.
-      if (!success) console.log(`Subgraph deploy failed.`);
     }
 
     console.log("Finished all jobs. Waiting 10 seconds.");
@@ -170,42 +154,3 @@ main()
     console.error(e);
     process.exit(1);
   });
-
-export const chains: Record<number, { name: string; slug: string }> = {
-  1: {
-    name: "Ethereum",
-    slug: "mainnet",
-  },
-  10: {
-    name: "Optimism",
-    slug: "optimism",
-  },
-  56: {
-    name: "BSC",
-    slug: "bsc",
-  },
-  137: {
-    name: "Polygon",
-    slug: "matic",
-  },
-  148: {
-    name: "Shimmer EVM",
-    slug: "shimmerevm",
-  },
-  11235: {
-    name: "Haqq Network",
-    slug: "haqq",
-  },
-  42161: {
-    name: "Arbitrum",
-    slug: "arbitrum-one",
-  },
-  421614: {
-    name: "Arbitrum-Sepolia",
-    slug: "arbitrum-sepolia",
-  },
-  245022934: {
-    name: "Neon EVM",
-    slug: "neonlabs",
-  },
-};

@@ -1,21 +1,29 @@
 import { parseContractName } from "../utils/parseNames";
 import { eventTracker, fixedImports } from "../templates/events";
-import { eventDataSource, head } from "../templates/yaml";
+import { eventDataSource, head, tail } from "../templates/project";
 import fs from "fs";
 import { exec } from "child_process";
 import { TideEvent } from "../utils/axios";
 
-// Build the subgraph.yaml file, which contains the data sources info
-export async function buildYamlFile(
+type Abi = Array<{
+  name: string;
+  type: string;
+  inputs: Array<{
+    name: string;
+  }>;
+}>;
+
+// Build the project.ts file, which contains the data sources info
+export async function buildProjectFile(
   eventsByContract: Record<string, TideEvent[]>,
-  chainSlug: string
+  name: string,
+  chainId: number
 ) {
-  let yamlString = head;
+  let fileString = head(name, chainId);
 
   Object.values(eventsByContract).forEach((contract) => {
-    yamlString = yamlString.concat(
+    fileString = fileString.concat(
       eventDataSource(
-        chainSlug,
         contract,
         contract[0].address,
         Math.min(...contract.map((event) => event.startBlock))
@@ -23,10 +31,10 @@ export async function buildYamlFile(
     );
   });
 
-  fs.writeFileSync("./subgraph.yaml", yamlString);
+  fs.writeFileSync("./project.ts", fileString.concat(tail));
   await new Promise((resolve) => setTimeout(resolve, 1_000));
 
-  return yamlString;
+  return fileString;
 }
 
 // Build the mappings.ts file, which contains the code that will be compiled to WASM
@@ -39,17 +47,22 @@ export async function buildMappingsFile(
   let mappingsString = fixedImports;
   Object.values(eventsByContract).forEach((contract) => {
     contract.forEach((event) => {
+      const eventAbi = (JSON.parse(event.abi) as Abi).find(
+        (abi) => abi.name === event.event && abi.type === "event"
+      );
+
       mappingsString = mappingsString.concat(
         eventTracker(
           event.event,
           event.id.replace(/-/g, "_"),
           event.taskIds,
-          event.address
+          event.address,
+          eventAbi!.inputs.map((p) => p.name)
         )
       );
     });
   });
-  fs.writeFileSync("./src/mappings/events.ts", mappingsString);
+  fs.writeFileSync("./src/mappings/mappingHandlers.ts", mappingsString);
   await new Promise((resolve) => setTimeout(resolve, 1_000));
 
   return mappingsString;

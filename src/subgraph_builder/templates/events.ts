@@ -10,11 +10,15 @@ export function eventTracker(
   eventName: string,
   eventId: string,
   tasks: string[],
-  contractAddress: string
+  contractAddress: string,
+  eventParamNames: string[]
 ) {
   const parsedContractName = parseContractName(contractAddress);
-  return `import { ${eventName} as ${eventName}_${eventId}} from "../../generated/${parsedContractName}/${parsedContractName}";
-  export function handle${eventId}(event: ${eventName}_${eventId}): void {
-    trackEvent(event, "${eventId}", ["${tasks.join('","')}"]);
-  }\n`;
+  const capitalizedContractName =
+    parsedContractName.charAt(0).toUpperCase() + parsedContractName.slice(1);
+  return `import { ${eventName}Event as ${eventName}_${eventId}} from "../types/contracts/${capitalizedContractName}";
+  export async function handle${eventId}(event: ${eventName}_${eventId}): Promise<void> {
+    await trackEvent(event, "${eventId}", ["${tasks.join(
+    '","'
+  )}"],["${eventParamNames.join('","')}"])}\n`;
 }

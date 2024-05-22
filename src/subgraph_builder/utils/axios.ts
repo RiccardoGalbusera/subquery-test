@@ -1,5 +1,6 @@
 import axios from "axios";
-import { getContractCreationBlockNumber } from "./block";
+import dotenv from "dotenv";
+dotenv.config();
 
 axios.defaults.baseURL = process.env.API_URL;
 
@@ -48,12 +49,7 @@ export async function getPerformanceContract(
 
   res = { ...res, chainId: res.chain };
 
-  const startBlock = await getContractCreationBlockNumber({
-    chainId: res.chainId,
-    address: res.address,
-  });
-
-  res["startBlock"] = startBlock;
+  res["startBlock"] = 1;
   res["event"] = JSON.parse(res.abi)[0].name;
   return res;
 }

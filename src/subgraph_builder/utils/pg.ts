@@ -1,9 +1,8 @@
 import pg from "pg";
 const { Pool } = pg;
-import { env } from "./constants.js";
 
 const TideDB = new Pool({
-  connectionString: env.DATABASE_URL,
+  connectionString: process.env.DATABASE_URL,
 });
 
 export async function getSubgraphVersion(
