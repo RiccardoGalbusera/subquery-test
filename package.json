@@ -1,0 +1,42 @@
+{
+  "name": "humanode-starter",
+  "version": "1.0.0",
+  "description": "A basic EVM example project with an event and call handler. Read more about this at https://academy.subquery.network/build/substrate-evm.html. This project can be use as a starting point for developing your SubQuery project",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "subql build",
+    "codegen": "subql codegen",
+    "start:docker": "docker-compose pull && docker-compose up --remove-orphans",
+    "dev": "subql codegen && subql build && docker-compose pull && docker-compose up --remove-orphans",
+    "prepack": "rm -rf dist && npm run build",
+    "test": "subql build && subql-node test"
+  },
+  "files": [
+    "dist",
+    "schema.graphql",
+    "project.yaml"
+  ],
+  "author": "SubQuery Team",
+  "license": "Apache-2.0",
+  "resolutions": {
+    "ipfs-unixfs": "6.0.6"
+  },
+  "devDependencies": {
+    "@polkadot/api": "^10",
+    "@subql/cli": "latest",
+    "@subql/node": "latest",
+    "@subql/node-ethereum": "latest",
+    "@subql/testing": "latest",
+    "@subql/types": "latest",
+    "ethers": "^5.7.2",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.2.2"
+  },
+  "dependencies": {
+    "@types/pg": "^8.11.6",
+    "assert": "^2.0.0",
+    "aws-sdk": "^2.1625.0",
+    "dotenv": "^16.4.5",
+    "pg": "^8.11.5"
+  }
+}

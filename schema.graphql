@@ -1,0 +1,24 @@
+type Interaction @entity {
+  id: ID!
+  user: User!
+  taskId: String!
+  interactedWith: String!
+  createdAt: BigInt!
+  txHash: String!
+  logIndex: BigInt!
+  blockTimestamp: BigInt!
+  blockNumber: BigInt!
+  params: [Param!]! @derivedFrom(field: "interaction")
+}
+
+type User @entity {
+  id: ID!
+  interactions: [Interaction!]! @derivedFrom(field: "user")
+}
+
+type Param @entity {
+  id: ID!
+  name: String!
+  value: String!
+  interaction: Interaction!
+}
