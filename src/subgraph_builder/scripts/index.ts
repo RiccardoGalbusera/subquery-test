@@ -13,6 +13,8 @@ import {
   writeAbisForContracts,
   buildProjectFile,
 } from "./builders";
+import fs from "fs";
+import { rpcUrl } from "../utils/networks";
 
 AWS.config.update({ region: "eu-west-1" });
 
@@ -25,19 +27,17 @@ const TIDE_LISTENER_QUEUE_URL = {
 };
 
 export async function buildAndDeploySubgraph(args: {
-  cid: string;
+  cids: string[];
   chainId: number;
   subgraphNumber: number;
-  environment: "production" | "development" | "local";
   performanceContractId?: string;
 }): Promise<boolean> {
-  const { cid, chainId, subgraphNumber, environment, performanceContractId } =
-    args;
+  const { cids, chainId, subgraphNumber, performanceContractId } = args;
 
   let events: TideEvent[] = [];
   if (performanceContractId)
     events = [await getPerformanceContract(performanceContractId)];
-  else events = await getCampaignOnChainEvents(cid, chainId);
+  else events = await getCampaignOnChainEvents(cids, chainId);
 
   // Group events by contract address and event name
   const eventsByContract = events.reduce((acc, event) => {
@@ -64,11 +64,17 @@ export async function buildAndDeploySubgraph(args: {
 
   await buildMappingsFile(eventsByContract);
 
-  const subgraphName = getSubgraphName(chainId, environment, subgraphNumber);
+  const subgraphName = getSubgraphName(chainId, subgraphNumber);
   await buildProjectFile(eventsByContract, subgraphName, chainId);
 
   try {
+    console.log("Files built, publishing on IPFS...");
     await execPromisified("yarn codegen && yarn build && subql publish");
+    const deployId = fs.readFileSync(".project-cid", { encoding: "utf-8" });
+    console.log("Publish successful, deploying to subquery...");
+    await execPromisified(
+      `export SUBQL_ACCESS_TOKEN=${process.env.SUBQL_ACCESS_TOKEN} && subql deployment:deploy -d --ipfsCID=${deployId} --org="FEL-developers" --projectName="${subgraphName}" --type=primary --endpoint="${rpcUrl[chainId]}"`
+    );
     return true;
   } catch (e) {
     console.warn(e);
@@ -108,20 +114,22 @@ async function main() {
 
     if (message && message.Body) {
       const {
-        cid,
+        cids,
         chainId,
         subgraphNumber,
         environment,
         performanceContractId,
       } = JSON.parse(message.Body);
 
-      if (chainId === 5234) {
+      if (
+        Object.keys(rpcUrl).includes(chainId) &&
+        environment === "production"
+      ) {
         console.log(`Processing message: ${message.Body}`);
         const success = await buildAndDeploySubgraph({
-          cid,
+          cids,
           chainId,
           subgraphNumber,
-          environment,
           performanceContractId,
         });
         console.log(`Deleting message: ${message.Body}`);

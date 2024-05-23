@@ -32,10 +32,10 @@ const project: SubstrateProject<FrontierEvmDatasource> = {
   },
   network: {
     chainId: "5234",
-    endpoint: process.env.ENDPOINT!?.split(",") as string[] | string,
+    endpoint: ["https://explorer-rpc-http.mainnet.stages.humanode.io"],
   },
   dataSources: [
-{
+    {
       kind: "substrate/FrontierEvm",
       startBlock: 7726010,
       processor: {
@@ -45,7 +45,14 @@ const project: SubstrateProject<FrontierEvmDatasource> = {
           address: "0x3f16f8964f8f5ab58929b58619056461f37f7317",
         },
       },
-      assets: new Map([["x3f16f8964f8f5ab58929b58619056461f37f7317", { file: "./abis/generated/x3f16f8964f8f5ab58929b58619056461f37f7317.json" }]]),
+      assets: new Map([
+        [
+          "x3f16f8964f8f5ab58929b58619056461f37f7317",
+          {
+            file: "./abis/generated/x3f16f8964f8f5ab58929b58619056461f37f7317.json",
+          },
+        ],
+      ]),
       mapping: {
         file: "./dist/index.js",
         handlers: [
@@ -53,14 +60,14 @@ const project: SubstrateProject<FrontierEvmDatasource> = {
             handler: "9dfe8ce3_cf5b_46ba_a050_993b27b3f55f",
             kind: "substrate/FrontierEvmEvent",
             filter: {
-              topics: [
-                "Claimed(indexed address,indexed uint256)",
-              ],
+              topics: ["Claimed(indexed address,indexed uint256)"],
             },
           },
         ],
       },
-    },]};
+    },
+  ],
+};
 
 // Must set default to the project instance
 export default project;

@@ -3,6 +3,7 @@
   which contains all the info about the data sources and events to track
 */
 
+import { rpcUrl } from "../utils/networks";
 import { parseContractName, parseEvent, parseId } from "../utils/parseNames";
 
 export const head: (name: string, chainId: number) => string = (
@@ -42,7 +43,7 @@ const project: SubstrateProject<FrontierEvmDatasource> = {
   },
   network: {
     chainId: "${chainId}",
-    endpoint: process.env.ENDPOINT!?.split(",") as string[] | string,
+    endpoint: ["${rpcUrl[chainId]}"],
   },
   dataSources: [\n`;
 

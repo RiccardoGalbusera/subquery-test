@@ -1,9 +1,3 @@
-export function getSubgraphName(
-  chainId: number,
-  environment: "production" | "development" | "local",
-  subgraphNumber: number
-) {
-  return `tide-${
-    environment === "production" ? "listener" : "dev"
-  }-${chainId}-${subgraphNumber}`;
+export function getSubgraphName(chainId: number, subgraphNumber: number) {
+  return `tide-dev-${chainId}-${subgraphNumber}`;
 }

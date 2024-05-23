@@ -4,16 +4,6 @@ dotenv.config();
 
 axios.defaults.baseURL = process.env.API_URL;
 
-export async function axiosRequest(options: any) {
-  try {
-    const res = await axios.request(options);
-    return res.data;
-  } catch (err: any) {
-    console.log(err);
-    return err.response.data;
-  }
-}
-
 export type TideEvent = {
   id: string;
   createdAt: string;
@@ -28,28 +18,29 @@ export type TideEvent = {
 };
 
 export async function getCampaignOnChainEvents(
-  cid: string,
+  cids: string[],
   chainId: number
 ): Promise<TideEvent[]> {
-  const res = await axiosRequest({
-    url: `/task/events?cid=${cid}&chainId=${Number(chainId)}`,
-    method: "GET",
+  const res = await axios.request<TideEvent[]>({
+    url: `/task/${chainId}/events`,
+    method: "POST",
+    data: { cids },
   });
 
-  return res;
+  return res.data;
 }
 
 export async function getPerformanceContract(
   performanceContractId: string
 ): Promise<TideEvent> {
-  let res = await axiosRequest({
+  let res = await axios.request({
     url: `/performance/contract?performanceContractId=${performanceContractId}`,
     method: "GET",
   });
 
-  res = { ...res, chainId: res.chain };
+  const data = { ...res.data, chainId: res.data.chain };
 
-  res["startBlock"] = 1;
-  res["event"] = JSON.parse(res.abi)[0].name;
-  return res;
+  data["startBlock"] = 1;
+  data["event"] = JSON.parse(data.abi)[0].name;
+  return data;
 }
