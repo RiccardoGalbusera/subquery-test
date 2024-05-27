@@ -1,5 +1,8 @@
-import { SubstrateProject } from "@subql/types";
-import { FrontierEvmDatasource } from "@subql/frontier-evm-processor";
+import {
+  EthereumProject,
+  EthereumDatasourceKind,
+  EthereumHandlerKind,
+} from "@subql/types-ethereum";
 import * as dotenv from "dotenv";
 import path from "path";
 
@@ -12,14 +15,14 @@ const dotenvPath = path.resolve(
 );
 dotenv.config({ path: dotenvPath });
 
-const project: SubstrateProject<FrontierEvmDatasource> = {
+const project: EthereumProject = {
   specVersion: "1.0.0",
   version: "0.0.1",
   name: "tide-dev-5234-1",
   description: "Tide event tracker",
   runner: {
     node: {
-      name: "@subql/node",
+      name: "@subql/node-ethereum",
       version: ">=3.0.1",
     },
     query: {
@@ -36,14 +39,11 @@ const project: SubstrateProject<FrontierEvmDatasource> = {
   },
   dataSources: [
     {
-      kind: "substrate/FrontierEvm",
+      kind: EthereumDatasourceKind.Runtime,
       startBlock: 7726010,
-      processor: {
-        file: "./node_modules/@subql/frontier-evm-processor/dist/bundle.js",
-        options: {
-          abi: "x3f16f8964f8f5ab58929b58619056461f37f7317",
-          address: "0x3f16f8964f8f5ab58929b58619056461f37f7317",
-        },
+      options: {
+        abi: "x3f16f8964f8f5ab58929b58619056461f37f7317",
+        address: "0x3f16f8964f8f5ab58929b58619056461f37f7317",
       },
       assets: new Map([
         [
@@ -57,10 +57,10 @@ const project: SubstrateProject<FrontierEvmDatasource> = {
         file: "./dist/index.js",
         handlers: [
           {
-            handler: "9dfe8ce3_cf5b_46ba_a050_993b27b3f55f",
-            kind: "substrate/FrontierEvmEvent",
+            handler: "handle9dfe8ce3_cf5b_46ba_a050_993b27b3f55f",
+            kind: EthereumHandlerKind.Event,
             filter: {
-              topics: ["Claimed(indexed address,indexed uint256)"],
+              topics: ["Claimed(address indexed user,uint256 indexed tokenId)"],
             },
           },
         ],

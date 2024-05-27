@@ -9,8 +9,11 @@ import { parseContractName, parseEvent, parseId } from "../utils/parseNames";
 export const head: (name: string, chainId: number) => string = (
   name,
   chainId
-) => `import { SubstrateProject } from "@subql/types";
-import { FrontierEvmDatasource } from "@subql/frontier-evm-processor";
+) => `import {
+  EthereumProject,
+  EthereumDatasourceKind,
+  EthereumHandlerKind,
+} from "@subql/types-ethereum";
 import * as dotenv from "dotenv";
 import path from "path";
 
@@ -23,14 +26,14 @@ const dotenvPath = path.resolve(
 );
 dotenv.config({ path: dotenvPath });
 
-const project: SubstrateProject<FrontierEvmDatasource> = {
+const project: EthereumProject = {
   specVersion: "1.0.0",
   version: "0.0.1",
   name: "${name}",
   description: "Tide event tracker",
   runner: {
     node: {
-      name: "@subql/node",
+      name: "@subql/node-ethereum",
       version: ">=3.0.1",
     },
     query: {
@@ -55,14 +58,11 @@ export function eventDataSource(
   const parsedContractName = parseContractName(contractAddress);
 
   return `{
-      kind: "substrate/FrontierEvm",
+      kind: EthereumDatasourceKind.Runtime,
       startBlock: ${startBlock},
-      processor: {
-        file: "./node_modules/@subql/frontier-evm-processor/dist/bundle.js",
-        options: {
-          abi: "${parsedContractName}",
-          address: "${contractAddress}",
-        },
+      options: {
+        abi: "${parsedContractName}",
+        address: "${contractAddress}",  
       },
       assets: new Map([["${parsedContractName}", { file: "./abis/generated/${parsedContractName}.json" }]]),
       mapping: {
@@ -72,7 +72,7 @@ export function eventDataSource(
             .map(
               (event) => `{
             handler: "${parseId(event.id)}",
-            kind: "substrate/FrontierEvmEvent",
+            kind: EthereumHandlerKind.Event,
             filter: {
               topics: [
                 "${parseEvent(event)}",

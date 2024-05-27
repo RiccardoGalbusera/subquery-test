@@ -18,13 +18,15 @@ export function parseEvent(event: { abi: string; event: string }) {
 }
 
 function parseInputs(inputs: any[]): string {
+  console.log(inputs);
   return inputs
     .map((input) => {
       if (input.type === "tuple") {
         return `(${parseInputs(input.components)})`;
       } else if (input.type === "tuple[]") {
         return `(${parseInputs(input.components)})[]`;
-      } else return (input.indexed ? "indexed " : "") + input.type;
+      } else
+        return `${input.type} ${input.indexed ? "indexed " : ""}${input.name}`;
     })
     .join(",");
 }

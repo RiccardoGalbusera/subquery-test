@@ -24,10 +24,10 @@
   },
   "devDependencies": {
     "@polkadot/api": "^10",
-    "@subql/cli": "latest",
+    "@subql/cli": "^4.10.1",
     "@subql/frontier-evm-processor": "^1.0.0",
-    "@subql/node": "latest",
-    "@subql/node-ethereum": "latest",
+    "@subql/node": "^4.5.1",
+    "@subql/node-ethereum": "^4.3.2",
     "@subql/testing": "latest",
     "@subql/types": "latest",
     "ethers": "^5.7.2",
